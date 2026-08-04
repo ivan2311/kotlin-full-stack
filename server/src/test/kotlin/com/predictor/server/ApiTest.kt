@@ -3,6 +3,8 @@ package com.predictor.server
 import com.predictor.server.plugins.configureMonitoring
 import com.predictor.server.plugins.configureRouting
 import com.predictor.server.plugins.configureSerialization
+import com.predictor.server.data.DatabaseConfig
+import com.predictor.server.data.DatabaseFactory
 import com.predictor.server.data.PredictionStore
 import com.predictor.shared.api.ApiRoutes
 import com.predictor.shared.api.MatchView
@@ -27,9 +29,13 @@ import kotlin.test.assertTrue
 
 class ApiTest {
 
+    /** Each test gets its own throwaway in-memory database, freshly seeded and isolated. */
+    private var dbCounter = 0
+
     private fun testApp(block: suspend (client: io.ktor.client.HttpClient) -> Unit) = testApplication {
+        val database = DatabaseFactory.connect(DatabaseConfig.inMemory("api-test-${dbCounter++}"))
         application {
-            val store = PredictionStore()
+            val store = PredictionStore(database)
             configureSerialization()
             configureMonitoring()
             configureRouting(store)

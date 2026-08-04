@@ -1,5 +1,6 @@
 package com.predictor.server
 
+import com.predictor.server.data.DatabaseFactory
 import com.predictor.server.data.PredictionStore
 import com.predictor.server.plugins.configureMonitoring
 import com.predictor.server.plugins.configureRouting
@@ -20,7 +21,7 @@ fun main() {
  * routes) can be read — and explained in the article — on its own.
  */
 fun Application.module() {
-    val store = PredictionStore()
+    val store = PredictionStore(DatabaseFactory.connect())
 
     configureSerialization()
     configureMonitoring()
