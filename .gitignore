@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin / JS / Wasm
+kotlin-js-store/
+node_modules/
+*.log
+
+# IDE
+.idea/
+*.iml
+.fleet/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env
+*.local
+local.properties
