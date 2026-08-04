@@ -91,7 +91,7 @@ Add these repository secrets (**Settings → Secrets and variables → Actions**
 
 | Secret                     | Value                                                                          |
 |----------------------------|--------------------------------------------------------------------------------|
-| `FIREBASE_SERVICE_ACCOUNT` | **Required.** The service-account JSON, base64-encoded: `base64 -w0 service-account.json` |
+| `FIREBASE_SERVICE_ACCOUNT` | **Required.** The service-account JSON — paste the raw file contents, or a base64 blob (`base64 -w0 service-account.json`). Both are accepted. |
 | `FIREBASE_GROUPS`          | *(optional)* overrides the default `qa` tester group when the workflow input is blank |
 | `FIREBASE_APP_ID`          | *(optional)* overrides the app id baked into the Gradle config                 |
 

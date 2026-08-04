@@ -5,9 +5,9 @@ name: Distribute Android (Firebase App Distribution)
 # default JVM/iOS/Wasm build and never touches Android or Firebase.
 #
 # Required repository secret (Settings → Secrets and variables → Actions):
-#   FIREBASE_SERVICE_ACCOUNT — base64 of a service-account JSON key with the
-#                              "Firebase App Distribution Admin" role
-#                              (create it, then: base64 -w0 service-account.json)
+#   FIREBASE_SERVICE_ACCOUNT — a service-account JSON key with the "Firebase App
+#                              Distribution Admin" role. Paste the raw JSON file
+#                              contents, or a base64 blob — both are accepted.
 # Optional secrets:
 #   FIREBASE_APP_ID          — override the app id baked into the Gradle config
 #                              (defaults to the predictor-5f15e project's Android app)
@@ -66,7 +66,33 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          echo "$FIREBASE_SERVICE_ACCOUNT" | base64 -d > "$RUNNER_TEMP/firebase-service-account.json"
+          # Accept the secret as either the raw service-account JSON or a base64 blob —
+          # try JSON first, fall back to base64-decoding, error if it's neither.
+          python3 - "$RUNNER_TEMP/firebase-service-account.json" <<'PY'
+          import base64, json, os, sys
+
+          raw = os.environ["FIREBASE_SERVICE_ACCOUNT"]
+          dest = sys.argv[1]
+
+          def as_json(text):
+              try:
+                  json.loads(text)
+                  return text
+              except Exception:
+                  return None
+
+          content = as_json(raw)
+          if content is None:
+              try:
+                  content = as_json(base64.b64decode(raw).decode("utf-8"))
+              except Exception:
+                  content = None
+          if content is None:
+              sys.exit("::error::FIREBASE_SERVICE_ACCOUNT is neither valid JSON nor base64-encoded JSON.")
+
+          with open(dest, "w") as f:
+              f.write(content)
+          PY
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
 
       # Build the debug APK (auto-signed with the debug keystore, so testers can install it),
