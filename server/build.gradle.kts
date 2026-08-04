@@ -32,6 +32,13 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.logback.classic)
 
+    // Persistence: Exposed SQL DSL + JDBC, an embedded H2 database, and a Hikari pool.
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.kotlin.datetime)
+    implementation(libs.h2)
+    implementation(libs.hikaricp)
+
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.serialization.json)
     testImplementation(libs.ktor.client.content.negotiation)

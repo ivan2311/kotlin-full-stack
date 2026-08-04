@@ -22,3 +22,9 @@ Thumbs.db
 # Local env
 *.local
 local.properties
+
+# Embedded H2 database (default dev persistence).
+# Anchored to the repo root so it doesn't match source dirs named "data".
+/data/
+*.mv.db
+*.trace.db
