@@ -27,9 +27,16 @@ if (firebaseEnabled) {
 }
 
 kotlin {
-    // Primary mobile target #1 — Android (only when opted in).
+    // Primary mobile target #1 — Android (only when opted in). Pin the Kotlin JVM target to
+    // 17 to match the Android compileOptions (Java 17); otherwise Kotlin defaults to the
+    // JDK-21 toolchain and AGP fails with an inconsistent-JVM-target error. JvmTarget comes
+    // from the Kotlin Gradle plugin (always on the classpath), so this is safe when off.
     if (androidEnabled) {
-        androidTarget()
+        androidTarget {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
+        }
     }
 
     // Primary mobile target #2 — iOS. Each target exposes the shared UI as a framework

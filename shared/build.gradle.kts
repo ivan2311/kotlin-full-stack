@@ -18,9 +18,16 @@ kotlin {
     // Consumed by the Ktor backend.
     jvm()
 
-    // Consumed by the Android app (only when Android is opted in).
+    // Consumed by the Android app (only when Android is opted in). Pin the Kotlin JVM target
+    // to 17 to match the Android compileOptions (Java 17); otherwise Kotlin defaults to the
+    // JDK-21 toolchain and AGP fails with an inconsistent-JVM-target error. JvmTarget comes
+    // from the Kotlin Gradle plugin (always on the classpath), so this is safe when off.
     if (androidEnabled) {
-        androidTarget()
+        androidTarget {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
+        }
     }
 
     // Consumed by the iOS app. These configure on any host but compile only on
