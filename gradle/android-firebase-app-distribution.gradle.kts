@@ -35,7 +35,9 @@ extensions.configure<AppDistributionExtension>("firebaseAppDistribution") {
         ?.let { serviceCredentialsFile = it }
 
     // Recipients: comma-separated Firebase tester group aliases and/or individual emails.
-    distSetting("firebase.groups", "FIREBASE_GROUPS")?.let { groups = it }
+    // Defaults to the "qa" group configured in the predictor-5f15e project; override with
+    // -Pfirebase.groups / FIREBASE_GROUPS (or add individual emails via firebase.testers).
+    groups = distSetting("firebase.groups", "FIREBASE_GROUPS") ?: "qa"
     distSetting("firebase.testers", "FIREBASE_TESTERS")?.let { testers = it }
 
     // Optional notes shown to testers with the build.

@@ -43,8 +43,9 @@ different project, override with `-Pfirebase.appId=…` or the `FIREBASE_APP_ID`
 Two things still have to be done in the Firebase console / Google Cloud before a build can
 be uploaded — neither can be committed:
 
-1. In **App Distribution**, create one or more **tester groups** and note each group's
-   *alias* (e.g. `qa`). Pass it via `-Pfirebase.groups` / the workflow input / `FIREBASE_GROUPS`.
+1. In **App Distribution**, create a **tester group**. The `qa` group is already the default
+   in the Gradle config; use that alias (or override with `-Pfirebase.groups` / the workflow
+   input / `FIREBASE_GROUPS`) and add testers to it in the console.
 2. Create a Google Cloud **service account** with the **Firebase App Distribution Admin**
    role and download its JSON key. This is what authenticates the upload.
 
@@ -59,12 +60,11 @@ With the Android SDK installed and the service-account JSON on disk:
 ./gradlew :web:assembleDebug :web:appDistributionUploadDebug \
   -Ppredictor.android=true -Ppredictor.firebase=true \
   -Pfirebase.serviceCredentialsFile="/path/to/service-account.json" \
-  -Pfirebase.groups="qa" \
   -Pfirebase.releaseNotes="Local test build"
 ```
 
-The app id defaults to the `predictor-5f15e` project, so you don't need to pass
-`-Pfirebase.appId` unless you're targeting a different project.
+The app id (`predictor-5f15e`) and tester group (`qa`) are the defaults, so you only need to
+supply credentials. Override either with `-Pfirebase.appId` / `-Pfirebase.groups` when needed.
 
 Every `-Pfirebase.*` value has an environment-variable equivalent, so you can export them
 instead of passing flags:
@@ -92,7 +92,7 @@ Add these repository secrets (**Settings → Secrets and variables → Actions**
 | Secret                     | Value                                                                          |
 |----------------------------|--------------------------------------------------------------------------------|
 | `FIREBASE_SERVICE_ACCOUNT` | **Required.** The service-account JSON, base64-encoded: `base64 -w0 service-account.json` |
-| `FIREBASE_GROUPS`          | *(optional)* default tester group aliases, used when the workflow input is blank |
+| `FIREBASE_GROUPS`          | *(optional)* overrides the default `qa` tester group when the workflow input is blank |
 | `FIREBASE_APP_ID`          | *(optional)* overrides the app id baked into the Gradle config                 |
 
 The workflow decodes the credentials into a temp file, points
