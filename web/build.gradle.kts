@@ -102,11 +102,11 @@ kotlin {
 // The `android { }` application config uses Android-Gradle-plugin types, so — like the
 // shared module — it lives in a separate script applied only when Android is opted in.
 if (androidEnabled) {
-    apply(from = rootProject.file("gradle/android-web-app.gradle.kts"))
+    apply(from = rootProject.file("gradle/android-web-app.gradle"))
 }
 
 // The `firebaseAppDistribution { }` config uses the Firebase plugin's types, so — same as
 // the Android config above — it lives in its own script applied only when Firebase is on.
 if (firebaseEnabled) {
-    apply(from = rootProject.file("gradle/android-firebase-app-distribution.gradle.kts"))
+    apply(from = rootProject.file("gradle/android-firebase-app-distribution.gradle"))
 }

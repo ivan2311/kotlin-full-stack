@@ -1,0 +1,21 @@
+// Android configuration for the :shared library. Applied from shared/build.gradle.kts only
+// when Android is opted in (`-Ppredictor.android=true`).
+//
+// This is a GROOVY script, deliberately, not Kotlin DSL. A `.gradle.kts` script applied via
+// `apply(from = …)` does NOT inherit the buildscript classpath, so it cannot resolve the
+// Android Gradle plugin types (LibraryExtension, …) at compile time. Groovy resolves the
+// `android { }` DSL dynamically at runtime against the extension the com.android.library
+// plugin already registered — no compile-time AGP types, and it configures that same
+// extension instance (no classloader duplication). On SDK-less / Android-off builds this
+// file is simply never applied.
+android {
+    namespace = 'com.predictor.shared'
+    compileSdk = 34
+    defaultConfig {
+        minSdk = 24
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}

@@ -1,0 +1,53 @@
+// Firebase App Distribution config for the :web Android app. Applied from web/build.gradle.kts
+// only when BOTH opt-ins are on (`-Ppredictor.android=true -Ppredictor.firebase=true`).
+//
+// GROOVY, not Kotlin DSL — a `.gradle.kts` applied via `apply(from = …)` can't resolve the
+// plugin's DSL type (AppDistributionExtension) at compile time; Groovy resolves the
+// `firebaseAppDistribution { }` block dynamically at runtime against the extension the
+// com.google.firebase.appdistribution plugin registered.
+//
+// Nothing here is a secret. Every value is read from a Gradle property (`-Pfirebase.*`) or an
+// environment variable, so the Firebase app id and the service-account credentials stay out of
+// the repo. Anything left unset falls back to a sensible default or the plugin's own behaviour
+// (the plugin natively reads FIREBASE_APP_ID and GOOGLE_APPLICATION_CREDENTIALS too).
+//
+// Ship a build with e.g.:
+//   ./gradlew :web:assembleDebug :web:appDistributionUploadDebug \
+//     -Ppredictor.android=true -Ppredictor.firebase=true
+
+// A Gradle property `firebase.<name>` (or `-Pfirebase.<name>=…`) wins; otherwise the env var;
+// otherwise null so a default/plugin-default applies. Blank values are treated as unset.
+def distSetting = { String propName, String envName ->
+    def prop = project.findProperty(propName)
+    if (prop != null && prop.toString().trim()) return prop.toString()
+    def env = System.getenv(envName)
+    if (env != null && env.trim()) return env
+    return null
+}
+
+firebaseAppDistribution {
+    // Which Firebase app to upload to. Defaults to the `predictor-5f15e` project's Android app
+    // (com.predictor.web); override with `-Pfirebase.appId=…` or FIREBASE_APP_ID. This is the
+    // public app id from google-services.json — safe to commit (it ships inside every APK); the
+    // sensitive part is the service-account credentials, which stay out of the repo.
+    appId = distSetting('firebase.appId', 'FIREBASE_APP_ID') ?: '1:300648501675:android:5e07835ebb6baf1ee3c2ee'
+
+    // Service-account JSON used to authenticate in CI. If unset, the plugin falls back to
+    // GOOGLE_APPLICATION_CREDENTIALS or an interactive `firebase login`.
+    def creds = distSetting('firebase.serviceCredentialsFile', 'GOOGLE_APPLICATION_CREDENTIALS')
+    if (creds) serviceCredentialsFile = creds
+
+    // Recipients: comma-separated Firebase tester group aliases and/or individual emails.
+    // Defaults to the "qa" group configured in the predictor-5f15e project.
+    groups = distSetting('firebase.groups', 'FIREBASE_GROUPS') ?: 'qa'
+    def testerList = distSetting('firebase.testers', 'FIREBASE_TESTERS')
+    if (testerList) testers = testerList
+
+    // Optional notes shown to testers with the build.
+    def notes = distSetting('firebase.releaseNotes', 'FIREBASE_RELEASE_NOTES')
+    if (notes) releaseNotes = notes
+
+    // We distribute the APK. The debug variant is auto-signed with the debug keystore, so
+    // testers can install it without a release signing config having to be wired up.
+    artifactType = 'APK'
+}

@@ -22,10 +22,12 @@ Gradle plugin nor the Firebase plugin is ever resolved.
   buildscript classpath, but only when both opt-ins are on.
 - **`web/build.gradle.kts`** — applies the `com.google.firebase.appdistribution` plugin and
   the config script below when Firebase is on.
-- **`gradle/android-firebase-app-distribution.gradle.kts`** — the `firebaseAppDistribution { }`
+- **`gradle/android-firebase-app-distribution.gradle`** — the `firebaseAppDistribution { }`
   config. It reads every value from a Gradle property or an environment variable, so **no
   secrets live in the repo**. It distributes the **debug** APK (auto-signed with the debug
-  keystore), so testers can install without a release signing config.
+  keystore), so testers can install without a release signing config. (Groovy, not Kotlin
+  DSL, like the other `gradle/android-*.gradle` scripts — a `.gradle.kts` applied via
+  `apply(from = …)` can't resolve the plugin's DSL types at compile time.)
 - **`.github/workflows/distribute-android.yml`** — a manually-triggered workflow that builds
   and uploads the APK from CI.
 
@@ -33,7 +35,7 @@ Gradle plugin nor the Firebase plugin is ever resolved.
 
 This repo is already wired to the Firebase project **`predictor-5f15e`** — its Android app
 id (`1:300648501675:android:5e07835ebb6baf1ee3c2ee`, for package `com.predictor.web`) is the
-default `appId` in `gradle/android-firebase-app-distribution.gradle.kts`. That app id is the
+default `appId` in `gradle/android-firebase-app-distribution.gradle`. That app id is the
 public identifier from `google-services.json` (it ships inside every APK, so it's safe to
 commit); the sensitive service-account credentials are **not** in the repo. To point at a
 different project, override with `-Pfirebase.appId=…` or the `FIREBASE_APP_ID` env/secret.
@@ -103,7 +105,7 @@ The workflow decodes the credentials into a temp file, points
 
 - **Debug vs. release.** We ship the debug variant so no release keystore is required. To
   distribute a signed release build instead, add a `signingConfig` to
-  `gradle/android-web-app.gradle.kts` and run `assembleRelease` +
+  `gradle/android-web-app.gradle` and run `assembleRelease` +
   `appDistributionUploadRelease`.
 - **Plugin version** is pinned in the root `build.gradle.kts`
   (`firebase-appdistribution-gradle:5.1.1`), alongside the Android Gradle plugin version.

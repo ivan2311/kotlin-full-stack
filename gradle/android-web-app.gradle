@@ -1,0 +1,25 @@
+// Android application config for the :web (Compose Multiplatform) client. Applied from
+// web/build.gradle.kts only when Android is opted in (`-Ppredictor.android=true`).
+//
+// GROOVY, not Kotlin DSL, for the same reason as android-shared-library.gradle: a
+// `.gradle.kts` applied via `apply(from = …)` can't resolve the Android Gradle plugin types
+// at compile time, whereas Groovy resolves the `android { }` DSL dynamically at runtime.
+android {
+    namespace = 'com.predictor.web'
+    compileSdk = 34
+    defaultConfig {
+        applicationId = 'com.predictor.web'
+        minSdk = 24
+        targetSdk = 34
+        // Overridable so a CI distribution build can stamp a fresh, increasing version
+        // (e.g. VERSION_CODE=${{ github.run_number }}); defaults keep local builds stable.
+        def envVersionCode = System.getenv('VERSION_CODE')
+        def envVersionName = System.getenv('VERSION_NAME')
+        versionCode = (envVersionCode?.trim()) ? envVersionCode.toInteger() : 1
+        versionName = (envVersionName?.trim()) ?: '1.0'
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}

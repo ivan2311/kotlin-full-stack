@@ -52,5 +52,5 @@ kotlin {
 // plugin is therefore present). Referencing those types from this always-compiled file
 // would break the build when Android is off.
 if (androidEnabled) {
-    apply(from = rootProject.file("gradle/android-shared-library.gradle.kts"))
+    apply(from = rootProject.file("gradle/android-shared-library.gradle"))
 }
