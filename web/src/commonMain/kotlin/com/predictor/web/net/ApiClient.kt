@@ -17,18 +17,19 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.browser.window
 import kotlinx.serialization.json.Json
 
 /**
- * The browser's view of the backend. Note what it does *not* contain: no DTO
- * definitions and no JSON field names. It calls the paths from [ApiRoutes] and
- * receives the exact model types from the shared module, so the client and server
- * are type-checked against one contract by the same compiler.
+ * The client's view of the backend, shared by every platform. Note what it does
+ * *not* contain: no DTO definitions and no JSON field names. It calls the paths from
+ * [ApiRoutes] and receives the exact model types from the shared module, so the
+ * client and server are type-checked against one contract by the same compiler.
+ *
+ * The only per-platform detail is the default [baseUrl] — the browser reads its own
+ * origin, the mobile apps point at the API host — supplied by [defaultBaseUrl].
  */
 class ApiClient(
-    // Served from the same origin as the API in production; overridable for local dev.
-    private val baseUrl: String = window.location.origin,
+    private val baseUrl: String = defaultBaseUrl(),
 ) {
     private val http = HttpClient {
         install(ContentNegotiation) {
