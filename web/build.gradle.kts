@@ -8,7 +8,32 @@ plugins {
     alias(libs.plugins.kotlin.compose.compiler)
 }
 
+// This module holds the Compose Multiplatform client. The UI (in commonMain) is shared
+// verbatim by three targets: Android and iOS — the stable, primary targets — plus the
+// browser (Wasm) as a bonus. The Android target needs the Android SDK + Gradle plugin,
+// which aren't present everywhere (or in this CI), so it is switched on only when an
+// SDK is detected; the JVM/iOS/Wasm build is unaffected when it isn't.
+val androidSdkAvailable: Boolean = rootProject.extra["androidSdkAvailable"] as Boolean
+if (androidSdkAvailable) {
+    pluginManager.apply("com.android.application")
+}
+
 kotlin {
+    // Primary mobile target #1 — Android (only when the SDK is available to build it).
+    if (androidSdkAvailable) {
+        androidTarget()
+    }
+
+    // Primary mobile target #2 — iOS. Each target exposes the shared UI as a framework
+    // that the Xcode app links. Compiles on macOS only; configured (harmlessly) elsewhere.
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "PredictorApp"
+            isStatic = true
+        }
+    }
+
+    // Bonus target — the same UI in the browser as WebAssembly.
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         moduleName = "web"
@@ -27,7 +52,9 @@ kotlin {
     }
 
     sourceSets {
-        wasmJsMain.dependencies {
+        // The entire UI, view model, theme and API client — written once, compiled for
+        // every target below.
+        commonMain.dependencies {
             implementation(project(":shared"))
 
             implementation(compose.runtime)
@@ -36,12 +63,36 @@ kotlin {
             implementation(compose.ui)
 
             implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.js)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
         }
+
+        // Each target contributes only its launcher + its Ktor engine + its base URL.
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
+        }
     }
+
+    // The iOS (and, when present, Android) intermediate source sets are created by the
+    // default hierarchy template; configure them lazily so they're resolved after that.
+    sourceSets.configureEach {
+        when (name) {
+            "iosMain" -> dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
+            "androidMain" -> dependencies {
+                implementation(libs.ktor.client.okhttp)
+                implementation(libs.androidx.activity.compose)
+            }
+        }
+    }
+}
+
+// The `android { }` application config uses Android-Gradle-plugin types, so — like the
+// shared module — it lives in a separate script applied only when the SDK is present.
+if (androidSdkAvailable) {
+    apply(from = rootProject.file("gradle/android-web-app.gradle.kts"))
 }

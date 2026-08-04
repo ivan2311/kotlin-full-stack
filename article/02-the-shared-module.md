@@ -47,10 +47,13 @@ Everything in `commonMain` is compiled *once per target* from the same source.
 targets, so the shared code has real libraries to lean on — not a lowest-common-denominator
 subset.
 
-> The reference repo for this series currently wires up `jvm()` and `wasmJs { browser() }`
-> (server + web). Adding `androidTarget()` and the `iosXxx()` targets is exactly the
-> one-block change shown above — no domain code changes, because none of it assumed a
-> platform in the first place. That's the point of keeping it in `commonMain`.
+> The reference repo wires up all of these: `jvm()` for the server, `iosArm64()` /
+> `iosSimulatorArm64()` for iOS, `androidTarget()` for Android, and `wasmJs { browser() }`
+> for the web. The Android target is switched on only when an Android SDK is present, and
+> the iOS targets compile only on macOS — so the JVM/Wasm build still runs anywhere,
+> including CI. Crucially, **none of the domain code changed** to gain those targets,
+> because none of it assumed a platform in the first place. That's the point of keeping it
+> in `commonMain`.
 
 ---
 

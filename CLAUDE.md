@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A full-stack Kotlin tournament-prediction game (pick scores, earn points, climb the leaderboard). Its defining trait: **backend, frontend, and the business logic they share are all Kotlin in one Gradle build**, with the domain model, scoring rules, and REST contract written exactly once in `:shared` and compiled to both JVM (server) and WebAssembly (browser).
+A full-stack Kotlin tournament-prediction game (pick scores, earn points, climb the leaderboard). Its defining trait: **backend, frontend, and the business logic they share are all Kotlin in one Gradle build**, with the domain model, scoring rules, and REST contract written exactly once in `:shared` and compiled to the JVM (server), Android, iOS, and WebAssembly (the clients).
 
 ## Modules
 
-| Module    | Target      | Role                                                                     |
-|-----------|-------------|--------------------------------------------------------------------------|
-| `shared`  | JVM + Wasm  | Domain model, scoring engine, leaderboard calculator, REST contract      |
-| `server`  | JVM         | Ktor (Netty) backend — REST API + in-memory store; also serves the built web app |
-| `web`     | Wasm        | Compose Multiplatform UI compiled to WebAssembly (no hand-written HTML/JS) |
+| Module    | Targets                        | Role                                                                     |
+|-----------|--------------------------------|--------------------------------------------------------------------------|
+| `shared`  | JVM · Android · iOS · Wasm     | Domain model, scoring engine, leaderboard calculator, REST contract      |
+| `server`  | JVM                            | Ktor (Netty) backend — REST API + in-memory store; also serves the built web app |
+| `web`     | Android · iOS · Wasm           | Compose Multiplatform client. **UI lives in `commonMain`** and is shared by all three targets; each target adds only a launcher + Ktor engine + base URL. `iosApp/` is the Swift shell that hosts the iOS framework. |
 
 Package root is `com.predictor.*` across all modules. Requires JDK 17+ (built with JDK 21). The Gradle wrapper (`./gradlew`) provides the Kotlin, Compose, Wasm, and Node toolchains — do not install these separately.
+
+**Android/iOS build requirements.** The Android target is switched on only when an Android SDK is detected (`ANDROID_HOME`/`ANDROID_SDK_ROOT`, or `sdk.dir` in `local.properties`) — see `androidSdkAvailable` in the root build and the gated `gradle/android-*.gradle.kts` scripts. Without an SDK (including CI), the Android Gradle plugin is never applied and the JVM/iOS/Wasm build is unaffected. The iOS targets are always declared but compile only on **macOS with Xcode**; on other hosts their compile tasks are simply never invoked. So the default Linux/CI build covers JVM + Wasm exactly as before.
 
 ## Commands
 

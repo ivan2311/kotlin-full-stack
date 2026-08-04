@@ -76,9 +76,11 @@ fun MainViewController(): UIViewController = ComposeUIViewController { App() }
 Three launchers, a handful of lines each. Every screen, every layout, every piece of state
 below `App()` is shared.
 
-> The reference repo ships the web launcher (`ComposeViewport`). The Android and iOS
-> launchers above are the standard Compose Multiplatform templates — they add the two
-> platforms without touching a single composable, because the composables never assumed a
+> The reference repo ships all three launchers: `ComposeViewport` for web, `MainActivity`
+> for Android, and `MainViewController` for iOS (with a thin Swift shell under `iosApp/`).
+> The shared UI — `App()` and everything below it — lives in `commonMain`; each target
+> adds only its launcher, its Ktor engine, and its base URL. Adding the two mobile
+> platforms touched **not a single composable**, because the composables never assumed a
 > platform.
 
 ---
