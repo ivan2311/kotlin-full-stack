@@ -18,6 +18,8 @@ Package root is `com.predictor.*` across all modules. Requires JDK 17+ (built wi
 
 **Android/iOS build requirements.** The Android target is an explicit **opt-in**: pass `-Ppredictor.android=true` (or set `predictor.android=true` in `gradle.properties`) on a machine that has the Android SDK. See `androidEnabled` in the root build — when opted in it puts the Android Gradle plugin on the buildscript classpath and the modules apply it (`gradle/android-*.gradle.kts` hold the AGP-typed config). It is opt-in rather than SDK-auto-detected because CI runners often have an SDK on `PATH` yet only run the JVM/iOS/Wasm tasks; auto-detecting there would apply AGP for nothing and break those builds. With Android off (the default, including CI), AGP is never resolved. The iOS targets are always declared but compile only on **macOS with Xcode**; on other hosts their compile tasks are simply never invoked. So the default Linux/CI build covers JVM + Wasm exactly as before.
 
+**Firebase App Distribution.** A second opt-in layered on Android ships the `:web` APK to testers: `-Ppredictor.firebase=true` (requires `-Ppredictor.android=true`). Same pattern — the `com.google.firebase.appdistribution` plugin classpath is added in the root build only when both flags are on, and its `firebaseAppDistribution { }` config lives in `gradle/android-firebase-app-distribution.gradle.kts`, reading every value (app id, credentials, groups) from Gradle properties/env so nothing secret is committed. A manual `.github/workflows/distribute-android.yml` builds + uploads from CI; the default `ci.yml` is untouched. Full setup in `docs/firebase-app-distribution.md`.
+
 ## Commands
 
 ```bash

@@ -11,8 +11,10 @@ extensions.configure<ApplicationExtension>("android") {
         applicationId = "com.predictor.web"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        // Overridable so a CI distribution build can stamp a fresh, increasing version
+        // (e.g. VERSION_CODE=${{ github.run_number }}); defaults keep local builds stable.
+        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull()) ?: 1
+        versionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.0"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

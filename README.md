@@ -133,6 +133,13 @@ one-line enum entry — no `when (sport)` branches to hunt down.
 That's it. The API, the scoring engine, and the Compose UI all read those properties, so
 nothing else needs to change.
 
+## Distributing the Android app
+
+The Android client can be shipped to testers via Firebase App Distribution. It's an
+opt-in that never touches the default build — see
+[`docs/firebase-app-distribution.md`](docs/firebase-app-distribution.md) for the Gradle
+flags, the manual CI workflow, and the required secrets.
+
 ## Status / next steps
 
 This is a first vertical slice. Natural follow-ups: real persistence (Exposed + a

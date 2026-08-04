@@ -18,6 +18,14 @@ if (androidEnabled) {
     pluginManager.apply("com.android.application")
 }
 
+// Firebase App Distribution — a further opt-in (`-Ppredictor.firebase=true`, see the root
+// build) layered on the Android app. It adds `appDistributionUpload<Variant>` tasks that ship
+// a built APK to testers. Off by default, so it never touches the JVM/iOS/Wasm build.
+val firebaseEnabled: Boolean = rootProject.extra["firebaseEnabled"] as Boolean
+if (firebaseEnabled) {
+    pluginManager.apply("com.google.firebase.appdistribution")
+}
+
 kotlin {
     // Primary mobile target #1 — Android (only when opted in).
     if (androidEnabled) {
@@ -95,4 +103,10 @@ kotlin {
 // shared module — it lives in a separate script applied only when Android is opted in.
 if (androidEnabled) {
     apply(from = rootProject.file("gradle/android-web-app.gradle.kts"))
+}
+
+// The `firebaseAppDistribution { }` config uses the Firebase plugin's types, so — same as
+// the Android config above — it lives in its own script applied only when Firebase is on.
+if (firebaseEnabled) {
+    apply(from = rootProject.file("gradle/android-firebase-app-distribution.gradle.kts"))
 }
