@@ -1,5 +1,7 @@
 # Kotlin Full-Stack Sports Predictor
 
+[![CI](https://github.com/ivan2311/kotlin-full-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/ivan2311/kotlin-full-stack/actions/workflows/ci.yml)
+
 A tournament prediction game — pick the scores, earn points, climb the leaderboard —
 built to demonstrate one idea: **you can be a full-stack developer using only Kotlin.**
 The backend, the frontend, and the business logic they *share* are all Kotlin, in one

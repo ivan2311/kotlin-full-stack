@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Test & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Fast, deterministic feedback: the shared scoring/leaderboard unit tests and
+      # the Ktor REST API integration tests.
+      - name: Run shared + server tests
+        run: ./gradlew :shared:jvmTest :server:test --stacktrace
+
+      # Compile the Compose Multiplatform frontend to WebAssembly and bundle it. We
+      # use the development distribution to skip the slow production wasm-opt pass
+      # while still catching any breakage in the Wasm/Compose code.
+      - name: Compile & bundle web (Wasm)
+        run: ./gradlew :web:wasmJsBrowserDevelopmentExecutableDistribution --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: "**/build/reports/tests/**"
+          if-no-files-found: ignore
+          retention-days: 7
