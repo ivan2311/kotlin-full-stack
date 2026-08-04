@@ -11,16 +11,16 @@ plugins {
 // This module holds the Compose Multiplatform client. The UI (in commonMain) is shared
 // verbatim by three targets: Android and iOS — the stable, primary targets — plus the
 // browser (Wasm) as a bonus. The Android target needs the Android SDK + Gradle plugin,
-// which aren't present everywhere (or in this CI), so it is switched on only when an
-// SDK is detected; the JVM/iOS/Wasm build is unaffected when it isn't.
-val androidSdkAvailable: Boolean = rootProject.extra["androidSdkAvailable"] as Boolean
-if (androidSdkAvailable) {
+// so it is an explicit opt-in (`-Ppredictor.android=true`, see the root build); the
+// JVM/iOS/Wasm build is unaffected when it's off (the default, including in CI).
+val androidEnabled: Boolean = rootProject.extra["androidEnabled"] as Boolean
+if (androidEnabled) {
     pluginManager.apply("com.android.application")
 }
 
 kotlin {
-    // Primary mobile target #1 — Android (only when the SDK is available to build it).
-    if (androidSdkAvailable) {
+    // Primary mobile target #1 — Android (only when opted in).
+    if (androidEnabled) {
         androidTarget()
     }
 
@@ -92,7 +92,7 @@ kotlin {
 }
 
 // The `android { }` application config uses Android-Gradle-plugin types, so — like the
-// shared module — it lives in a separate script applied only when the SDK is present.
-if (androidSdkAvailable) {
+// shared module — it lives in a separate script applied only when Android is opted in.
+if (androidEnabled) {
     apply(from = rootProject.file("gradle/android-web-app.gradle.kts"))
 }

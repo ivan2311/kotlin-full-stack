@@ -1,3 +1,23 @@
+// Put the Android Gradle plugin on the buildscript classpath ONLY when Android is opted
+// in (`-Ppredictor.android=true`). Applying it by id in the subprojects
+// (`pluginManager.apply("com.android.…")`) needs it here first. Guarding it this way
+// means that with Android off — the default, and what CI runs — AGP is never resolved
+// (it lives on Google's Maven, which some environments block), so the JVM/iOS/Wasm build
+// is completely unaffected.
+buildscript {
+    val androidEnabled = (providers.gradleProperty("predictor.android").orNull ?: "false").toBoolean()
+    if (androidEnabled) {
+        repositories {
+            google()
+            mavenCentral()
+            gradlePluginPortal()
+        }
+        dependencies {
+            classpath("com.android.tools.build:gradle:8.5.2")
+        }
+    }
+}
+
 // Root build file. All real configuration lives in the per-module build files;
 // this only wires up the plugin versions so they can be applied without a version
 // in each subproject.
@@ -10,18 +30,13 @@ plugins {
     alias(libs.plugins.ktor) apply false
 }
 
-// Whether an Android SDK is available on this machine. The Android target and the
-// Android app module are switched on only when it is, so the project still builds
-// its JVM, iOS and Wasm parts on machines (and CI) that have no Android SDK
-// installed. Computed once here and read by the subprojects via `extra`.
-val androidSdkAvailable: Boolean = run {
-    fun envDir(name: String) = System.getenv(name)?.takeIf { it.isNotBlank() }?.let { file(it) }
-    val fromEnv = (envDir("ANDROID_HOME") ?: envDir("ANDROID_SDK_ROOT"))?.isDirectory == true
-    val fromLocalProps = file("local.properties").takeIf { it.exists() }?.let { props ->
-        java.util.Properties().apply { props.inputStream().use { load(it) } }
-            .getProperty("sdk.dir")?.takeIf { it.isNotBlank() }?.let { file(it).isDirectory } == true
-    } ?: false
-    fromEnv || fromLocalProps
-}
+// Whether to build the Android target/app. It's an explicit opt-in (default off) rather
+// than auto-detected, because CI runners often have an Android SDK on PATH yet only run
+// the JVM/iOS/Wasm tasks — auto-detecting there would apply the Android Gradle plugin
+// (and its whole configuration) for no reason and break those builds. Enable it with
+// `-Ppredictor.android=true` (or set `predictor.android=true` in gradle.properties) on a
+// machine that has the Android SDK. Read by the subprojects via `extra`.
+val androidEnabled: Boolean =
+    (findProperty("predictor.android") as String?)?.toBoolean() ?: false
 
-extra["androidSdkAvailable"] = androidSdkAvailable
+extra["androidEnabled"] = androidEnabled

@@ -5,13 +5,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// The Android target needs the Android Gradle plugin and a local SDK. To keep the
-// JVM/Wasm build working on machines (and CI) without the Android SDK installed, the
-// Android bits below are switched on only when an SDK is actually present. When it is
-// not, the plugin is never applied and none of its (Google-hosted) artifacts are
-// fetched — everything else builds exactly as before.
-val androidSdkAvailable: Boolean = rootProject.extra["androidSdkAvailable"] as Boolean
-if (androidSdkAvailable) {
+// The Android target needs the Android Gradle plugin and a local SDK. It is an explicit
+// opt-in (`-Ppredictor.android=true`, see the root build) so the JVM/Wasm build works
+// unchanged on machines and CI that don't ask for Android. When it's off, the plugin is
+// never applied and none of its (Google-hosted) artifacts are fetched.
+val androidEnabled: Boolean = rootProject.extra["androidEnabled"] as Boolean
+if (androidEnabled) {
     pluginManager.apply("com.android.library")
 }
 
@@ -19,8 +18,8 @@ kotlin {
     // Consumed by the Ktor backend.
     jvm()
 
-    // Consumed by the Android app (only when the SDK is available to build it).
-    if (androidSdkAvailable) {
+    // Consumed by the Android app (only when Android is opted in).
+    if (androidEnabled) {
         androidTarget()
     }
 
@@ -49,9 +48,9 @@ kotlin {
 }
 
 // The `android { }` block references Android-Gradle-plugin types, so it lives in a
-// separate script that is compiled and applied only when the SDK (and therefore the
-// plugin) is present. Referencing those types from this always-compiled file would
-// break the build on SDK-less machines.
-if (androidSdkAvailable) {
+// separate script that is compiled and applied only when Android is opted in (and the
+// plugin is therefore present). Referencing those types from this always-compiled file
+// would break the build when Android is off.
+if (androidEnabled) {
     apply(from = rootProject.file("gradle/android-shared-library.gradle.kts"))
 }
