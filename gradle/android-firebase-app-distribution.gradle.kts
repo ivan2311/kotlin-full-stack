@@ -22,9 +22,12 @@ fun distSetting(propName: String, envName: String): String? =
         ?: System.getenv(envName)?.takeIf { it.isNotBlank() }
 
 extensions.configure<AppDistributionExtension>("firebaseAppDistribution") {
-    // Which Firebase app to upload to, e.g. "1:1234567890:android:0a1b2c3d4e5f". Required; the
-    // plugin also reads FIREBASE_APP_ID on its own, but we thread it through a property too.
-    distSetting("firebase.appId", "FIREBASE_APP_ID")?.let { appId = it }
+    // Which Firebase app to upload to. Defaults to the `predictor-5f15e` project's Android app
+    // (com.predictor.web); override with `-Pfirebase.appId=…` or FIREBASE_APP_ID for a different
+    // project. This is the app id from google-services.json — safe to commit (it ships inside
+    // every APK); the sensitive part is the service-account credentials, which stay out of the repo.
+    appId = distSetting("firebase.appId", "FIREBASE_APP_ID")
+        ?: "1:300648501675:android:5e07835ebb6baf1ee3c2ee"
 
     // Service-account JSON used to authenticate in CI. If unset, the plugin falls back to
     // GOOGLE_APPLICATION_CREDENTIALS or an interactive `firebase login`.

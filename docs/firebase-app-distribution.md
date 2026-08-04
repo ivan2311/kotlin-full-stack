@@ -29,16 +29,27 @@ Gradle plugin nor the Firebase plugin is ever resolved.
 - **`.github/workflows/distribute-android.yml`** — a manually-triggered workflow that builds
   and uploads the APK from CI.
 
+## The configured project
+
+This repo is already wired to the Firebase project **`predictor-5f15e`** — its Android app
+id (`1:300648501675:android:5e07835ebb6baf1ee3c2ee`, for package `com.predictor.web`) is the
+default `appId` in `gradle/android-firebase-app-distribution.gradle.kts`. That app id is the
+public identifier from `google-services.json` (it ships inside every APK, so it's safe to
+commit); the sensitive service-account credentials are **not** in the repo. To point at a
+different project, override with `-Pfirebase.appId=…` or the `FIREBASE_APP_ID` env/secret.
+
 ## One-time Firebase setup
 
-1. Create a Firebase project (or reuse one) at <https://console.firebase.google.com>.
-2. Add an **Android app** with package name `com.predictor.web`. Copy its **App ID** — it
-   looks like `1:1234567890:android:0a1b2c3d4e5f`. (No `google-services.json` is needed;
-   the App ID is supplied directly.)
-3. In the console, open **App Distribution**, and create one or more **tester groups**
-   (note each group's *alias*, e.g. `qa`).
-4. Create a Google Cloud **service account** with the **Firebase App Distribution Admin**
-   role and download its JSON key. This is what CI authenticates with.
+Two things still have to be done in the Firebase console / Google Cloud before a build can
+be uploaded — neither can be committed:
+
+1. In **App Distribution**, create one or more **tester groups** and note each group's
+   *alias* (e.g. `qa`). Pass it via `-Pfirebase.groups` / the workflow input / `FIREBASE_GROUPS`.
+2. Create a Google Cloud **service account** with the **Firebase App Distribution Admin**
+   role and download its JSON key. This is what authenticates the upload.
+
+(To use a different Firebase project entirely, also create/register an Android app for
+package `com.predictor.web` there and override the app id as noted above.)
 
 ## Distribute from your machine
 
@@ -47,11 +58,13 @@ With the Android SDK installed and the service-account JSON on disk:
 ```bash
 ./gradlew :web:assembleDebug :web:appDistributionUploadDebug \
   -Ppredictor.android=true -Ppredictor.firebase=true \
-  -Pfirebase.appId="1:1234567890:android:0a1b2c3d4e5f" \
   -Pfirebase.serviceCredentialsFile="/path/to/service-account.json" \
   -Pfirebase.groups="qa" \
   -Pfirebase.releaseNotes="Local test build"
 ```
+
+The app id defaults to the `predictor-5f15e` project, so you don't need to pass
+`-Pfirebase.appId` unless you're targeting a different project.
 
 Every `-Pfirebase.*` value has an environment-variable equivalent, so you can export them
 instead of passing flags:
@@ -78,9 +91,9 @@ Add these repository secrets (**Settings → Secrets and variables → Actions**
 
 | Secret                     | Value                                                                          |
 |----------------------------|--------------------------------------------------------------------------------|
-| `FIREBASE_APP_ID`          | The Android app id from step 2 above                                           |
-| `FIREBASE_SERVICE_ACCOUNT` | The service-account JSON, base64-encoded: `base64 -w0 service-account.json`    |
+| `FIREBASE_SERVICE_ACCOUNT` | **Required.** The service-account JSON, base64-encoded: `base64 -w0 service-account.json` |
 | `FIREBASE_GROUPS`          | *(optional)* default tester group aliases, used when the workflow input is blank |
+| `FIREBASE_APP_ID`          | *(optional)* overrides the app id baked into the Gradle config                 |
 
 The workflow decodes the credentials into a temp file, points
 `GOOGLE_APPLICATION_CREDENTIALS` at it, then runs the same `assembleDebug` +
