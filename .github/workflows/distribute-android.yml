@@ -23,6 +23,10 @@ on:
         description: "Release notes shown to testers"
         required: false
         default: ""
+      apiBaseUrl:
+        description: "Base URL of the deployed API the distributed app should talk to"
+        required: false
+        default: "https://kotlin-full-stack-production.up.railway.app"
 
 permissions:
   contents: read
@@ -101,6 +105,9 @@ jobs:
         env:
           FIREBASE_GROUPS: ${{ github.event.inputs.groups != '' && github.event.inputs.groups || secrets.FIREBASE_GROUPS }}
           FIREBASE_RELEASE_NOTES: ${{ github.event.inputs.releaseNotes }}
+          # Point the distributed APK at the deployed server (testers run on real devices,
+          # so the emulator-loopback default would be unreachable). Baked into BuildConfig.
+          API_BASE_URL: ${{ github.event.inputs.apiBaseUrl }}
           # Stamp a fresh, increasing version so each distributed build is distinct.
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: "1.0.${{ github.run_number }}"
