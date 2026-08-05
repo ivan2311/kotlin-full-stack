@@ -37,6 +37,9 @@ dependencies {
     implementation(libs.exposed.jdbc)
     implementation(libs.exposed.kotlin.datetime)
     implementation(libs.h2)
+    // Postgres JDBC driver — no code change needed; DatabaseFactory infers the driver
+    // from a `jdbc:postgresql://…` DATABASE_URL, this just puts the class on the classpath.
+    implementation(libs.postgresql)
     implementation(libs.hikaricp)
 
     testImplementation(libs.ktor.server.test.host)
