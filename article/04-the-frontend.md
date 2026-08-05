@@ -9,6 +9,7 @@ bonus, in the browser.*
 > 2. [The shared module — write the rules once](02-the-shared-module.md)
 > 3. [The Ktor backend — a JVM server that speaks your model](03-the-ktor-backend.md)
 > 4. **One Compose UI — Android, iOS, and the web** *(you are here)*
+> 5. [The numbers — what sharing actually saves](05-the-numbers.md)
 
 ---
 
@@ -230,4 +231,5 @@ That one file runs everywhere, and that's the point.
 > [1. The idea](01-the-idea.md) ·
 > [2. The shared module](02-the-shared-module.md) ·
 > [3. The Ktor backend](03-the-ktor-backend.md) ·
-> **4. One Compose UI**
+> **4. One Compose UI** ·
+> [5. The numbers](05-the-numbers.md)

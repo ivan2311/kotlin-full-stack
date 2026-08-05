@@ -9,6 +9,7 @@ themselves.*
 > 2. **The shared module — write the rules once** *(you are here)*
 > 3. [The Ktor backend — a JVM server that speaks your model](03-the-ktor-backend.md)
 > 4. [One Compose UI — Android, iOS, and the web](04-the-frontend.md)
+> 5. [The numbers — what sharing actually saves](05-the-numbers.md)
 
 ---
 
