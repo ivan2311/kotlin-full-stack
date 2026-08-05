@@ -41,19 +41,24 @@ import com.predictor.shared.scoring.ScoreBreakdown
 import com.predictor.shared.scoring.ScoreCategory
 
 @Composable
-fun FixturesList(vm: AppViewModel, sport: Sport) {
+fun FixturesList(vm: AppViewModel, sport: Sport, compact: Boolean = false) {
     LazyColumn(
         Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(vm.matchViews) { view ->
-            MatchRow(view = view, sport = sport, onSave = { outcome -> vm.savePrediction(view.match.id, outcome) })
+            MatchRow(
+                view = view,
+                sport = sport,
+                compact = compact,
+                onSave = { outcome -> vm.savePrediction(view.match.id, outcome) },
+            )
         }
     }
 }
 
 @Composable
-private fun MatchRow(view: MatchView, sport: Sport, onSave: (MatchOutcome) -> Unit) {
+private fun MatchRow(view: MatchView, sport: Sport, compact: Boolean, onSave: (MatchOutcome) -> Unit) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -63,19 +68,36 @@ private fun MatchRow(view: MatchView, sport: Sport, onSave: (MatchOutcome) -> Un
             }
             Spacer(Modifier.size(12.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
+            // On phones the teams and the prediction controls each need the full width,
+            // so we stack them vertically instead of side by side.
+            if (compact) {
+                Column(Modifier.fillMaxWidth()) {
                     Text(view.home.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     Text(view.away.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Spacer(Modifier.size(12.dp))
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                        MatchControls(view, sport, onSave)
+                    }
                 }
-
-                when (view.match.status) {
-                    MatchStatus.FINISHED -> FinishedPanel(view, sport)
-                    MatchStatus.LIVE -> Text("In progress…", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                    MatchStatus.SCHEDULED -> PredictionEditor(view, sport, onSave)
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(view.home.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        Text(view.away.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    }
+                    MatchControls(view, sport, onSave)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MatchControls(view: MatchView, sport: Sport, onSave: (MatchOutcome) -> Unit) {
+    when (view.match.status) {
+        MatchStatus.FINISHED -> FinishedPanel(view, sport)
+        MatchStatus.LIVE -> Text("In progress…", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        MatchStatus.SCHEDULED -> PredictionEditor(view, sport, onSave)
     }
 }
 
