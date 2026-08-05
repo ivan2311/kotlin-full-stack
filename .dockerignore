@@ -1,0 +1,25 @@
+# Keep the Docker build context small and reproducible: never copy local build
+# outputs or caches — the image builds everything from source inside the container.
+.git
+.gradle
+build
+**/build
+kotlin-js-store
+node_modules
+**/node_modules
+
+# Local dev artifacts that must not leak into the image.
+data
+*.mv.db
+*.trace.db
+*.log
+.idea
+.fleet
+.vscode
+.DS_Store
+local.properties
+*.local
+
+# Docs / CI aren't needed to build the server image.
+docs
+.github

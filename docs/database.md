@@ -44,10 +44,30 @@ export DATABASE_PASSWORD="…"
 ./gradlew :server:run
 ```
 
-Add the Postgres JDBC driver to `server/build.gradle.kts`
-(`implementation("org.postgresql:postgresql:<version>")`) so the driver class is on the
-classpath. Exposed creates the schema on first startup; swap in Flyway/Liquibase if you
-want managed migrations later.
+The Postgres JDBC driver is already on the server's classpath (`libs.postgresql` in
+`server/build.gradle.kts`), so no build change is needed — a `jdbc:postgresql://…`
+`DATABASE_URL` is enough and `DatabaseFactory` infers the driver from it. Exposed creates
+the schema on first startup; swap in Flyway/Liquibase if you want managed migrations later.
+
+### Deploying to Railway (or any Postgres host)
+
+The repo ships a multi-stage `Dockerfile` that builds the Wasm frontend and the server
+fat JAR and serves both. Railway prefers a `Dockerfile` over its autodetection, so the
+deploy is reproducible. Add a Postgres database to the project and set on the server:
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | `jdbc:postgresql://<host>:<port>/<db>` (Railway exposes host/port/db on the Postgres service) |
+| `DATABASE_USER` | the database user |
+| `DATABASE_PASSWORD` | the database password |
+
+`PORT` is injected by the platform and already honoured in `Application.kt`. With no
+`DATABASE_*` set the container falls back to the embedded H2 file at `/app/data`, which is
+**ephemeral** on Railway — attach a volume or use Postgres for durable data.
+
+> **Supabase note:** use the connection pooler in **session mode** (port `5432`, not the
+> transaction-mode `6543`) and append `?sslmode=require` to the URL — the pooler is
+> IPv4-friendly and session mode supports the prepared statements Exposed/HikariCP rely on.
 
 ## Seeding
 
