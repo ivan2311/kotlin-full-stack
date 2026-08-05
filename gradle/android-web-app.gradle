@@ -4,9 +4,27 @@
 // GROOVY, not Kotlin DSL, for the same reason as android-shared-library.gradle: a
 // `.gradle.kts` applied via `apply(from = …)` can't resolve the Android Gradle plugin types
 // at compile time, whereas Groovy resolves the `android { }` DSL dynamically at runtime.
+
+// Which API host the app talks to, baked into BuildConfig at build time. A distribution
+// build for real devices must point at the deployed server; local emulator dev keeps the
+// default. A Gradle property `predictor.apiBaseUrl` (or the API_BASE_URL env var) wins;
+// otherwise `10.0.2.2:8080`, the address the Android emulator uses for the host's localhost.
+def resolveApiBaseUrl = { ->
+    def prop = project.findProperty('predictor.apiBaseUrl')
+    if (prop != null && prop.toString().trim()) return prop.toString().trim()
+    def env = System.getenv('API_BASE_URL')
+    if (env != null && env.trim()) return env.trim()
+    return 'http://10.0.2.2:8080'
+}
+def apiBaseUrl = resolveApiBaseUrl()
+
 android {
     namespace = 'com.predictor.web'
     compileSdk = 34
+    // BuildConfig is off by default in AGP 8+; turn it on so API_BASE_URL is generated.
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = 'com.predictor.web'
         minSdk = 24
@@ -17,6 +35,8 @@ android {
         def envVersionName = System.getenv('VERSION_NAME')
         versionCode = (envVersionCode?.trim()) ? envVersionCode.toInteger() : 1
         versionName = (envVersionName?.trim()) ?: '1.0'
+        // Read by Platform.android.kt's defaultBaseUrl(); the String value must be quoted.
+        buildConfigField 'String', 'API_BASE_URL', "\"${apiBaseUrl}\""
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
