@@ -3,6 +3,7 @@ package com.predictor.web
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +32,7 @@ private const val RANK_W = 44
 private const val NUM_W = 76
 
 @Composable
-fun LeaderboardTable(vm: AppViewModel) {
+fun LeaderboardTable(vm: AppViewModel, compact: Boolean = false) {
     val board = vm.leaderboard
     if (board == null || board.entries.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -41,9 +42,11 @@ fun LeaderboardTable(vm: AppViewModel) {
     }
 
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        item { HeaderRow() }
+        // The fixed-width numeric columns don't fit on a phone, so compact mode
+        // drops the header and folds the extra stats under the player's name.
+        if (!compact) item { HeaderRow() }
         items(board.entries) { entry ->
-            LeaderboardRow(entry, highlighted = entry.userId == vm.currentUserId)
+            LeaderboardRow(entry, highlighted = entry.userId == vm.currentUserId, compact = compact)
         }
     }
 }
@@ -68,7 +71,7 @@ private fun HeaderRow() {
 }
 
 @Composable
-private fun LeaderboardRow(entry: LeaderboardEntry, highlighted: Boolean) {
+private fun LeaderboardRow(entry: LeaderboardEntry, highlighted: Boolean, compact: Boolean) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -81,15 +84,29 @@ private fun LeaderboardRow(entry: LeaderboardEntry, highlighted: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(RANK_W.dp), contentAlignment = Alignment.Center) { RankMedal(entry.rank) }
-        Text(
-            entry.displayName,
-            modifier = Modifier.weight(1f).padding(start = 4.dp),
-            fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Medium,
-            fontSize = 15.sp,
-        )
-        FixedValue(entry.exactHits.toString())
-        FixedValue(entry.predictionsScored.toString())
-        Box(Modifier.width(NUM_W.dp), contentAlignment = Alignment.CenterEnd) {
+        Column(Modifier.weight(1f).padding(start = 4.dp)) {
+            Text(
+                entry.displayName,
+                fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Medium,
+                fontSize = 15.sp,
+            )
+            // On phones the Exact/Scored columns are gone, so surface those numbers here.
+            if (compact) {
+                Text(
+                    "${entry.exactHits} exact · ${entry.predictionsScored} scored",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+        }
+        if (!compact) {
+            FixedValue(entry.exactHits.toString())
+            FixedValue(entry.predictionsScored.toString())
+        }
+        Box(
+            modifier = if (compact) Modifier else Modifier.width(NUM_W.dp),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
             Text(
                 "${entry.totalPoints}",
                 fontWeight = FontWeight.Bold,

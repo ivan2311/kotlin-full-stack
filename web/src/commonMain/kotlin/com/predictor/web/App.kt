@@ -3,6 +3,7 @@ package com.predictor.web
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
@@ -51,13 +53,24 @@ fun App() {
 
     PredictorTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.fillMaxSize()) {
-                HeaderBar(vm)
-                vm.error?.let { ErrorBanner(it) }
-                Row(Modifier.fillMaxSize()) {
-                    TournamentRail(vm, Modifier.width(280.dp))
-                    VerticalRule()
-                    DetailPane(vm, Modifier.weight(1f))
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                // Below this width (phones, narrow windows) the side-by-side rail
+                // doesn't fit, so we stack into a single column instead.
+                val compact = maxWidth < 720.dp
+                Column(Modifier.fillMaxSize()) {
+                    HeaderBar(vm, compact)
+                    vm.error?.let { ErrorBanner(it) }
+                    if (compact) {
+                        TournamentStrip(vm)
+                        HorizontalDivider()
+                        DetailPane(vm, Modifier.weight(1f), compact = true)
+                    } else {
+                        Row(Modifier.fillMaxSize()) {
+                            TournamentRail(vm, Modifier.width(280.dp))
+                            VerticalRule()
+                            DetailPane(vm, Modifier.weight(1f), compact = false)
+                        }
+                    }
                 }
             }
         }
@@ -65,10 +78,12 @@ fun App() {
 }
 
 @Composable
-private fun HeaderBar(vm: AppViewModel) {
+private fun HeaderBar(vm: AppViewModel, compact: Boolean) {
     Surface(color = MaterialTheme.colorScheme.primary) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = if (compact) 16.dp else 24.dp, vertical = if (compact) 12.dp else 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -82,15 +97,20 @@ private fun HeaderBar(vm: AppViewModel) {
                 Text(
                     "Kotlin Predictor",
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 22.sp,
+                    fontSize = if (compact) 18.sp else 22.sp,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
                 )
-                Text(
-                    "One Kotlin codebase — backend, frontend and scoring rules",
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                    fontSize = 13.sp,
-                )
+                // The tagline crowds a phone header, so we only show it when there's room.
+                if (!compact) {
+                    Text(
+                        "One Kotlin codebase — backend, frontend and scoring rules",
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                    )
+                }
             }
+            Spacer(Modifier.width(8.dp))
             UserPicker(vm)
         }
     }
@@ -136,6 +156,54 @@ private fun TournamentRail(vm: AppViewModel, modifier: Modifier = Modifier) {
                 summary = summary,
                 selected = summary.id == vm.selectedTournamentId,
                 onClick = { vm.select(summary.id) },
+            )
+        }
+    }
+}
+
+/** Compact-mode replacement for the side rail: a horizontally scrolling strip of tournaments. */
+@Composable
+private fun TournamentStrip(vm: AppViewModel) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(vm.tournaments) { summary ->
+            CompactTournamentCard(
+                summary = summary,
+                selected = summary.id == vm.selectedTournamentId,
+                onClick = { vm.select(summary.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactTournamentCard(summary: TournamentSummary, selected: Boolean, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        ),
+        modifier = Modifier.width(210.dp),
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SportBadge(summary.sport, size = 20)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "${summary.name} ${summary.season}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                )
+            }
+            Spacer(Modifier.size(4.dp))
+            Text(
+                "${summary.competitorCount} ${summary.sport.competitorNoun.lowercase()}s · ${summary.matchCount} matches",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                maxLines = 1,
             )
         }
     }
@@ -200,17 +268,22 @@ private fun VerticalRule() {
 }
 
 @Composable
-private fun DetailPane(vm: AppViewModel, modifier: Modifier = Modifier) {
+private fun DetailPane(vm: AppViewModel, modifier: Modifier = Modifier, compact: Boolean = false) {
+    val pad = if (compact) 16.dp else 24.dp
     val tournament = vm.selectedTournament
     if (tournament == null) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier.fillMaxSize().padding(pad), contentAlignment = Alignment.Center) {
             Text(if (vm.loading) "Loading…" else "Pick a tournament to start predicting")
         }
         return
     }
 
-    Column(modifier.fillMaxSize().padding(24.dp)) {
-        Text("${tournament.name} ${tournament.season}", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+    Column(modifier.fillMaxSize().padding(pad)) {
+        Text(
+            "${tournament.name} ${tournament.season}",
+            fontSize = if (compact) 20.sp else 24.sp,
+            fontWeight = FontWeight.Bold,
+        )
         Text(
             "Predict every fixture. Exact scores earn the most; a correct result still scores.",
             fontSize = 13.sp,
@@ -227,8 +300,8 @@ private fun DetailPane(vm: AppViewModel, modifier: Modifier = Modifier) {
         Spacer(Modifier.size(16.dp))
 
         when (vm.tab) {
-            DetailTab.FIXTURES -> FixturesList(vm, tournament.sport)
-            DetailTab.LEADERBOARD -> LeaderboardTable(vm)
+            DetailTab.FIXTURES -> FixturesList(vm, tournament.sport, compact)
+            DetailTab.LEADERBOARD -> LeaderboardTable(vm, compact)
         }
     }
 }
