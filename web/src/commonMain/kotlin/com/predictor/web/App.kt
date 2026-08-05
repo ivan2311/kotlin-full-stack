@@ -111,17 +111,26 @@ private fun HeaderBar(vm: AppViewModel, compact: Boolean) {
                 }
             }
             Spacer(Modifier.width(8.dp))
-            UserPicker(vm)
+            UserPicker(vm, compact)
         }
     }
 }
 
 @Composable
-private fun UserPicker(vm: AppViewModel) {
+private fun UserPicker(vm: AppViewModel, compact: Boolean) {
     var open by remember { mutableStateOf(false) }
+    val name = vm.currentUser?.displayName ?: "…"
     Box {
-        OutlinedButton(onClick = { open = true }) {
-            Text("Playing as: ${vm.currentUser?.displayName ?: "…"}", color = MaterialTheme.colorScheme.onPrimary)
+        OutlinedButton(
+            onClick = { open = true },
+            contentPadding = if (compact) {
+                androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            } else {
+                androidx.compose.material3.ButtonDefaults.ContentPadding
+            },
+        ) {
+            // The "Playing as:" prefix crowds a phone header, so compact shows just the name.
+            Text(if (compact) name else "Playing as: $name", color = MaterialTheme.colorScheme.onPrimary)
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             vm.users.forEach { user ->
